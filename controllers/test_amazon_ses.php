@@ -16,9 +16,7 @@ class Test_amazon_ses extends CI_Controller {
 	function index() {
 		
 		// Surpress notices
-		error_reporting(E_ALL);
-		
-		$this->load->library(array('amazon_ses', 'unit_test'));
+		error_reporting(0);
 		
 		// Make sure we're running in strict test mode
 		$this->unit->use_strict(TRUE);
@@ -56,16 +54,12 @@ class Test_amazon_ses extends CI_Controller {
 		$this->unit->run($this->amazon_ses->recipients['to'][3], 'test3@example.com', 'Set to address (array) (3)', '-');
 		$this->unit->run($this->amazon_ses->recipients['to'][4], 'test4@example.com', 'Set to address (array) (4)', '-');
 		
-		
-	
 		// Set subject
 		$this->amazon_ses->subject('Subject');
 		$this->unit->run($this->amazon_ses->subject, 'Subject', 'Set message subject', '-');
 		
 		// Display all results
 		echo $this->unit->report();
-		
-		
 		
 	}
 

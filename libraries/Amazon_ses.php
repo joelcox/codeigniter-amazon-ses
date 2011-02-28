@@ -147,13 +147,23 @@ class Amazon_ses
 	}
 	
 	/**
-	 * Sets the message message
+	 * Sets the message
 	 * @param string the message
 	 * @return void
 	 */
 	public function message($message)
 	{
 		$this->message = $message;
+	}
+	
+	/**
+	 * Sets the alternative message (plain-text) for when HTML email is not supported by email client
+	 * @param string the message
+	 * @return void
+	 */
+	public function message_alt($message_alt)
+	{
+		$this->message_alt = $message_alt;
 	}
 	
 	/**
@@ -295,7 +305,9 @@ class Amazon_ses
 			'Action' => 'SendEmail',
 			'Source' => $this->from,
 			'Message.Subject.Data' => $this->subject,
-			'Message.Body.Text.Data' => $this->message
+			'Message.Body.Text.Data' => (empty($this->message_alt) ? strip_tags($this->message) : $this->message_alt),
+			'Message.Body.Html.Data' => $this->message
+			
 		);
 		
 		// Add all recipients to array

@@ -25,3 +25,5 @@ libraries/index.html
 models/
 third_party/
 views/
+logs/
+libraries/Curl.php
