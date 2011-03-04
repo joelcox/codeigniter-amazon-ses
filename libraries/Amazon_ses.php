@@ -173,7 +173,15 @@ class Amazon_ses
 	*/
 	public function send($destroy = TRUE)
 	{
-		$this->_ci->load->library('curl');
+		// First try to load the cURL library through Sparks and fall back on the default loader
+		if (method_exists($this->_ci->load, 'spark'))
+		{
+			$this->_ci->load->spark('curl/1.0');
+		}
+		else
+		{
+			$this->_ci->load->library('curl');		
+		}
 		
 		// Set the endpoint		
 		$this->_ci->curl->create($this->_endpoint());
@@ -376,6 +384,5 @@ class Amazon_ses
 	{		
 		return 'https://email.' . $this->region . '.amazonaws.com';
 	}
-	
-	
+		
 }

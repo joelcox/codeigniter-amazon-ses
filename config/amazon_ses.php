@@ -3,7 +3,7 @@
 /**
  * Config for the Amazon Simple Email Service library
  *
- * @see /application/libraries/Amazon_ses.php
+ * @see ../libraries/Amazon_ses.php
  */
 
 // Amazon credentials
