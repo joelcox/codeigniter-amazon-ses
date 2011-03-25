@@ -14,9 +14,10 @@ class Test_amazon_ses extends CI_Controller {
 	}
 	
 	function index() {
-		
-		// Surpress notices
-		error_reporting(0);
+				
+		// Load the required libraries
+		$this->load->spark('amazon-ses/dev');
+		$this->load->library('unit_test');
 		
 		// Make sure we're running in strict test mode
 		$this->unit->use_strict(TRUE);

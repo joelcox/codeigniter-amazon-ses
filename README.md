@@ -10,7 +10,8 @@ Requirements
 2. CodeIgniter 2.0+ (http://codeigniter.com)
 3. libcurl
 4. Phil Sturgeon's CodeIgniter cURL library (http://github.com/philsturgeon/codeigniter-curl)
-5. Amazon Web Services account (http://aws.amazon.com)
+5. A bundle of public root certificates (e.g. http://curl.haxx.se/ca/cacert.pem)
+6. An Amazon Web Services account (http://aws.amazon.com)
 
 Spark
 -------------

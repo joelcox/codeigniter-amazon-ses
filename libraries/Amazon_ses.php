@@ -77,6 +77,11 @@ class Amazon_ses
 			$this->reply_to = $this->_ci->config->item('amazon_ses_reply_to');
 		}
 		
+		if ( ! file_exists($this->_cert_path))
+		{
+			show_error('CA root certificates not found. Please <a href="http://curl.haxx.se/ca/cacert.pem">download</a> a bundle of public root certificates and/or specify its location in config/amazon_ses.php');
+		}
+		
 	}
 	
 	/**
