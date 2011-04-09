@@ -232,6 +232,7 @@ class Amazon_ses
 	* Verify an email sender 'From' address
 	* @param string email to verify as a sender for this Amazon SES account
 	* @return boolean
+        * @author Ben Hartard
 	*/
 	public function verify($email)
 	{
