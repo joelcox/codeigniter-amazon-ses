@@ -227,6 +227,61 @@ class Amazon_ses
 			return TRUE;				
 		}
 	}
+
+	/**
+	* Verify an email sender 'From' address
+	* @param string email to verify as a sender for this Amazon SES account
+	* @return boolean
+	*/
+	public function verify($email)
+	{
+		// First try to load the cURL library through Sparks and fall back on the default loader
+		if (method_exists($this->_ci->load, 'spark'))
+		{
+                       $this->_ci->load->spark('curl/1.0');
+		}
+		else
+		{
+			$this->_ci->load->library('curl');		
+		}
+		
+		// Set the endpoint		
+		$this->_ci->curl->create($this->_endpoint());
+		
+		// Add post options and headers
+		$query_string = array(
+			'Action' => 'VerifyEmailAddress',
+			'EmailAddress' => $email
+		);		
+		$this->_ci->curl->post($query_string);
+		$this->_set_headers();
+		
+		// Make sure we connect over HTTPS and verify
+		$this->_ci->curl->ssl(TRUE, 2, $this->_cert_path);
+		
+		// Show headers and output when in debug mode		
+		if($this->debug === TRUE)
+		{
+			$this->_ci->curl->option(CURLOPT_FAILONERROR, FALSE);
+			$this->_ci->curl->option(CURLINFO_HEADER_OUT, TRUE);
+			
+			return $this->_ci->curl->execute();
+			
+		}
+			
+		$response = $this->_ci->curl->execute();	
+				
+		// Check if everything went okay
+		if ($response === FALSE)
+		{
+			log_message('debug', 'Email verification request failed.');
+			return FALSE;
+		}
+		else
+		{
+			return TRUE;				
+		}
+	}
 	
 	/**
 	* Sets debugmode
