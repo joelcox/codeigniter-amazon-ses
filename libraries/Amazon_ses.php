@@ -47,6 +47,7 @@ class Amazon_ses
 	public $subject;					// Message subject
 	public $message;					// Message body
 	public $message_alt;				// Message body alternative in plain-text
+	public $charset;					// Character set
 	public $destroy = TRUE;				// Whether to reset everything after success		
 	
 	public $debug = FALSE;					
@@ -66,6 +67,8 @@ class Amazon_ses
 		$this->_secret_key = $this->_ci->config->item('amazon_ses_secret_key');
 		$this->_cert_path = $this->_ci->config->item('amazon_ses_cert_path');			
 		$this->from = $this->_ci->config->item('amazon_ses_from');
+		$this->charset = $this->_ci->config->item('amazon_ses_charset');
+		
 		
 		// Check whether reply_to is not set
 		if ($this->_ci->config->item('reply_to') === FALSE)
@@ -332,7 +335,6 @@ class Amazon_ses
 		
 		if (isset($this->recipients['cc']))
 		{
-		
 			for ($i = 0; $i < count($this->recipients['cc']); $i++)
 			{
 				$query_string['Destination.CcAddresses.member.' . ($i + 1)] = $this->recipients['cc'][$i]; 
@@ -345,6 +347,14 @@ class Amazon_ses
 			{
 				$query_string['Destination.BccAddresses.member.' . ($i + 1)] = $this->recipients['bcc'][$i]; 
 			}
+		}
+		
+		// Add character encoding if set
+		if ( ! empty($this->charset))
+		{
+			$query_string['Message.Body.Html.Charset'] = $this->charset;
+			$query_string['Message.Body.Text.Charset'] = $this->charset;
+			$query_string['Message.Subject.Charset'] = $this->charset;	
 		}
 				
 		return $query_string;
