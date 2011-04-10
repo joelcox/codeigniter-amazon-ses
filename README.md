@@ -23,6 +23,13 @@ Documentation
 ### Configuration
 This library expects a configuration file to function correctly. A template for this file is provided with the library. 
 
+### Setup
+Before you can send your first message, Amazon SES requires that you verify your email address. This is to confirm that you own the email address, and to prevent others from using it.
+
+Request to verify your email address as a sender.
+
+    $this->amazon_ses->verify('email@example.com');
+
 ### Recipients
 
 Set the "To" address(es) for a message.
