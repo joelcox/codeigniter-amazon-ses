@@ -23,12 +23,12 @@ Documentation
 ### Configuration
 This library expects a configuration file to function correctly. A template for this file is provided with the library. 
 
-### Setup
+### Verify email address
 Before you can send your first message, Amazon SES requires that you verify your email address. This is to confirm that you own the email address, and to prevent others from using it.
 
 Request to verify your email address as a sender.
 
-    $this->amazon_ses->verify('email@example.com');
+    $this->amazon_ses->verify_address('from@example.com');
 
 ### Recipients
 
@@ -81,3 +81,4 @@ I am a firm believer of social coding, so <strike>if</strike> when you find a bu
 Thanks to
 ---------
 * Phil Sturgeon (http://philsturgeon.co.uk), for creating the CodeIgniter cURL library (http://github.com/philsturgeon/codeigniter-curl) and thus taking care of all the cURL hassle.
+* Ben Hartard (http://github.com/bhartard), for adding the email verification method.

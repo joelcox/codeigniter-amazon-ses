@@ -77,18 +77,29 @@ class Amazon_ses
 			$this->reply_to = $this->_ci->config->item('amazon_ses_reply_to');
 		}
 		
+		// Is our certificate path valid?
 		if ( ! file_exists($this->_cert_path))
 		{
 			show_error('CA root certificates not found. Please <a href="http://curl.haxx.se/ca/cacert.pem">download</a> a bundle of public root certificates and/or specify its location in config/amazon_ses.php');
+		}
+		
+		// Load Phil's cURL library as a Spark or the normal way
+		if (method_exists($this->_ci->load, 'spark'))
+		{
+        	$this->_ci->load->spark('curl/1.0');
+		}
+		else
+		{
+			$this->_ci->load->library('curl');		
 		}
 		
 	}
 	
 	/**
 	 * Sets the from address
-	 * @param string email address the message is from
-	 * @param string name for the from address
-	 * @return void
+	 * @param 	string 	email address the message is from
+	 * @param 	string 	name for the from address
+	 * @return 	void
 	 */
 	public function from($from, $name = NULL)
 	{
@@ -107,8 +118,8 @@ class Amazon_ses
 	
 	/**
 	 * Sets the to address
-	 * @param string to email address
-	 * @return void 
+	 * @param 	string 	to email address
+	 * @return 	void 
 	 */
 	public function to($to)
 	{
@@ -119,8 +130,8 @@ class Amazon_ses
 	
 	/**
 	 * Sets the cc address
-	 * @param string cc email address
-	 * @return void 
+	 * @param 	string 	cc email address
+	 * @return 	void 
 	 */
 	public function cc($cc)
 	{	
@@ -131,8 +142,8 @@ class Amazon_ses
 	
 	/**
 	 * Sets the bcc address
-	 * @param string bcc email address
-	 * @return void 
+	 * @param 	string 	bcc email address
+	 * @return 	void 
 	 */
 	public function bcc($bcc)
 	{
@@ -143,8 +154,8 @@ class Amazon_ses
 	
 	/**
 	 * Sets the email subject
-	 * @param string the subject
-	 * @return void
+	 * @param 	string	the subject
+	 * @return 	void
 	 */
 	public function subject($subject)
 	{
@@ -153,8 +164,8 @@ class Amazon_ses
 	
 	/**
 	 * Sets the message
-	 * @param string the message
-	 * @return void
+	 * @param 	string	the message to be sent
+	 * @return 	void
 	 */
 	public function message($message)
 	{
@@ -163,8 +174,8 @@ class Amazon_ses
 	
 	/**
 	 * Sets the alternative message (plain-text) for when HTML email is not supported by email client
-	 * @param string the message
-	 * @return void
+	 * @param 	string 	the alternative message to be sent
+	 * @return 	void
 	 */
 	public function message_alt($message_alt)
 	{
@@ -172,122 +183,54 @@ class Amazon_ses
 	}
 	
 	/**
-	* Sends off the email
-	* @param boolean whether to empty the $recipients array on success
-	* @return boolean
-	*/
+	 * Sends off the email
+	 * @param 	bool	whether to empty the recipients array on success
+	 * @return 	bool
+	 */
 	public function send($destroy = TRUE)
 	{
-		// First try to load the cURL library through Sparks and fall back on the default loader
-		if (method_exists($this->_ci->load, 'spark'))
-		{
-			$this->_ci->load->spark('curl/1.0');
-		}
-		else
-		{
-			$this->_ci->load->library('curl');		
-		}
 		
-		// Set the endpoint		
-		$this->_ci->curl->create($this->_endpoint());
+		// Create the message query string
+		$query_string = $this->_format_query_string();
 		
-		// Add post options and headers
-		$this->_format_query_string();
-		$this->_set_headers();
+		// Pass it to the Amazon API	
+		$response = $this->_api_request($query_string);		
 		
-		// Make sure we connect over HTTPS and verify
-		$this->_ci->curl->ssl(TRUE, 2, $this->_cert_path);
-		
-		// Show headers and output when in debug mode		
-		if($this->debug === TRUE)
+		// Destroy recipients if set
+		if ($destroy === TRUE)
 		{
-			$this->_ci->curl->option(CURLOPT_FAILONERROR, FALSE);
-			$this->_ci->curl->option(CURLINFO_HEADER_OUT, TRUE);
-			
-			return $this->_ci->curl->execute();
-			
+			unset($this->recipients);
 		}
-			
-		$response = $this->_ci->curl->execute();	
-				
-		// Check if everything went okay
-		if ($response === FALSE)
-		{
-			log_message('debug', 'Email could not be send');
-			return FALSE;
-		}
-		else
-		{
-			// Destroy recipients if needed
-			if ($destroy === TRUE)
-			{
-				unset($this->recipients);
-			}
-			
-			return TRUE;				
-		}
+	
+		return $response;
+	
 	}
 
 	/**
-	* Verify an email sender 'From' address
-	* @param string email to verify as a sender for this Amazon SES account
-	* @return boolean
-        * @author Ben Hartard
-	*/
-	public function verify($email)
+	 * Verifies a from address as a valid sender
+	 * @link 	http://docs.amazonwebservices.com/ses/latest/GettingStartedGuide/index.html?VerifyEmailAddress.html
+	 * @param 	string	email address to verify as a sender
+	 * @return 	bool
+     * @author 	Ben Hartard
+	 */
+	public function verify_address($from)
 	{
-		// First try to load the cURL library through Sparks and fall back on the default loader
-		if (method_exists($this->_ci->load, 'spark'))
-		{
-                       $this->_ci->load->spark('curl/1.0');
-		}
-		else
-		{
-			$this->_ci->load->library('curl');		
-		}
-		
-		// Set the endpoint		
-		$this->_ci->curl->create($this->_endpoint());
 		
 		// Add post options and headers
 		$query_string = array(
 			'Action' => 'VerifyEmailAddress',
-			'EmailAddress' => $email
-		);		
-		$this->_ci->curl->post($query_string);
-		$this->_set_headers();
+			'EmailAddress' => $from
+		);
 		
-		// Make sure we connect over HTTPS and verify
-		$this->_ci->curl->ssl(TRUE, 2, $this->_cert_path);
+		// Hand it off to Amazon		
+		return $this->_api_request($query_string);
 		
-		// Show headers and output when in debug mode		
-		if($this->debug === TRUE)
-		{
-			$this->_ci->curl->option(CURLOPT_FAILONERROR, FALSE);
-			$this->_ci->curl->option(CURLINFO_HEADER_OUT, TRUE);
-			
-			return $this->_ci->curl->execute();
-			
-		}
-			
-		$response = $this->_ci->curl->execute();	
-				
-		// Check if everything went okay
-		if ($response === FALSE)
-		{
-			log_message('debug', 'Email verification request failed.');
-			return FALSE;
-		}
-		else
-		{
-			return TRUE;				
-		}
 	}
 	
 	/**
 	* Sets debugmode
 	* Make send() return the actual response instead of a bool
-	* @return void
+	* @return 	void
 	*/
 	public function debug()
 	{
@@ -319,8 +262,8 @@ class Amazon_ses
 	
 	/**
 	 * Formats arrays and comma delimertered lists
-	 * @param array or string the list with addresses
-	 * @param string recipient type (i.e. to, cc, bcc)
+	 * @param 	mixed 	the list with addresses
+	 * @param 	string 	recipient type (i.e. to, cc, bcc)
 	 */
 	private function _format_addresses($addresses, $type)
 	{
@@ -365,8 +308,8 @@ class Amazon_ses
 	}
 	
 	/**
-	 * Generates the query string to be posted
-	 * @return void
+	 * Generates the query string for email
+	 * @return	array
 	 */
 	private function _format_query_string()
 	{
@@ -376,7 +319,6 @@ class Amazon_ses
 			'Message.Subject.Data' => $this->subject,
 			'Message.Body.Text.Data' => (empty($this->message_alt) ? strip_tags($this->message) : $this->message_alt),
 			'Message.Body.Html.Data' => $this->message
-			
 		);
 		
 		// Add all recipients to array
@@ -405,13 +347,13 @@ class Amazon_ses
 			}
 		}
 				
-		$this->_ci->curl->post($query_string);
+		return $query_string;
 		
 	}
 	
 	/**
 	 * Generates the X-Amzn headers
-	 * @return string headers including signed signature
+	 * @return 	string	headers including signed signature
 	 */
 	private function _set_headers()
 	{
@@ -426,8 +368,8 @@ class Amazon_ses
 	
 	/**
 	 * Calculate signature
-	 * @param string date used in the header
-	 * @return string the RFC 2104-compliant HMAC hash
+	 * @param	string	date used in the header
+	 * @return	string 	RFC 2104-compliant HMAC hash
 	 */
 	private function _sign_signature($date)
 	{
@@ -439,11 +381,47 @@ class Amazon_ses
 	
 	/**
 	 * Generates API endpoint
-	 * @return string URL to the SES endpoint for the region
+	 * @return 	string	URL to the SES endpoint for the region
 	 */
 	private function _endpoint()
 	{		
 		return 'https://email.' . $this->region . '.amazonaws.com';
+	}
+	
+	private function _api_request($query_string)
+	{
+		
+		// Set the endpoint		
+		$this->_ci->curl->create($this->_endpoint());
+				
+		$this->_ci->curl->post($query_string);
+		$this->_set_headers();
+		
+		// Make sure we connect over HTTPS and verify
+		$this->_ci->curl->ssl(TRUE, 2, $this->_cert_path);
+		
+		// Show headers and output when in debug mode		
+		if($this->debug === TRUE)
+		{
+			$this->_ci->curl->option(CURLOPT_FAILONERROR, FALSE);
+			$this->_ci->curl->option(CURLINFO_HEADER_OUT, TRUE);
+			
+			return $this->_ci->curl->execute();
+		}
+			
+		$response = $this->_ci->curl->execute();	
+				
+		// Check if everything went okay
+		if ($response === FALSE)
+		{
+			log_message('debug', 'API request failed.');
+			return FALSE;
+		}
+		else
+		{
+			return TRUE;				
+		}
+		
 	}
 		
 }
