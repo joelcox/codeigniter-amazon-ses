@@ -8,6 +8,7 @@
  * @category    	Libraries
  * @author        	Joël Cox
  * @link 			https://github.com/joelcox/codeigniter-amazon-ses
+ * @link			http://joelcox.nl		
  * @license         http://www.opensource.org/licenses/mit-license.html
  * 
  * Copyright (c) 2011 Joël Cox and contributers
@@ -217,13 +218,13 @@ class Amazon_ses
 	 * @return 	bool
      * @author 	Ben Hartard
 	 */
-	public function verify_address($from)
+	public function verify_address($address)
 	{
 		
-		// Add post options and headers
+		// Prep our query string
 		$query_string = array(
 			'Action' => 'VerifyEmailAddress',
-			'EmailAddress' => $from
+			'EmailAddress' => $address
 		);
 		
 		// Hand it off to Amazon		
@@ -232,7 +233,42 @@ class Amazon_ses
 	}
 	
 	/**
-	* Sets debugmode
+	 * Checks whether the supplied email address is verified
+	 * @param	string	email address to be checked
+	 * @return 	bool
+	 */
+	public function address_is_verified($address)
+	{
+		// Prep our query string
+		$query_string = array(
+			'Action' => 'ListVerifiedEmailAddresses'
+		);
+
+		// Get our list with verified addresses
+		$response = $this->_api_request($query_string, TRUE);
+
+		// Just return the text response when we're in debug mode
+		if ($this->debug === TRUE)
+		{
+			return $response;
+		}
+
+		// We don't want to introduce another dependency (a XML parser)
+		// so we just check if the address is present in the response
+		// instead of returning an array with all addresses
+		if (strpos($response, $address) === FALSE)
+		{
+			return FALSE;
+		}
+		else
+		{
+			return TRUE;	
+		}
+		
+	}
+	
+	/**
+	* Sets debug mode
 	* Makes send return the actual API response instead of a bool
 	* @return 	void
 	*/
@@ -400,7 +436,13 @@ class Amazon_ses
 		return 'https://email.' . $this->region . '.amazonaws.com';
 	}
 	
-	private function _api_request($query_string)
+	/**
+	 * Send a request to the Amazon SES API using Phil's cURL lib
+	 * @param arra		query parameters that have to be added
+	 * @param bool		return the actual response
+	 * @return mixed
+	 */
+	private function _api_request($query_string, $return = FALSE)
 	{
 		
 		// Set the endpoint		
@@ -412,16 +454,20 @@ class Amazon_ses
 		// Make sure we connect over HTTPS and verify
 		$this->_ci->curl->ssl(TRUE, 2, $this->_cert_path);
 		
-		// Show headers and output when in debug mode		
+		// Show headers when in debug mode		
 		if($this->debug === TRUE)
 		{
 			$this->_ci->curl->option(CURLOPT_FAILONERROR, FALSE);
 			$this->_ci->curl->option(CURLINFO_HEADER_OUT, TRUE);
-			
-			return $this->_ci->curl->execute();
 		}
 			
-		$response = $this->_ci->curl->execute();	
+		$response = $this->_ci->curl->execute();
+
+		// Return the actual response when in debug or if requested specifically
+		if($this->debug === TRUE OR $return === TRUE)
+		{
+			return $response;
+		}
 				
 		// Check if everything went okay
 		if ($response === FALSE)

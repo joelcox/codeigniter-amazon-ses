@@ -7,15 +7,15 @@ NOTE: this code is still under heavy development and currently provides only the
 Requirements
 ------------
 1. PHP 5.1+
-2. CodeIgniter 2.0+ (http://codeigniter.com)
-3. libcurl
-4. Phil Sturgeon's CodeIgniter cURL library (http://github.com/philsturgeon/codeigniter-curl)
+2. [CodeIgniter 2.0+](http://codeigniter.com)
+3. libcurl with OpenSSL support
+4. Phil Sturgeon's CodeIgniter [cURL library](http://github.com/philsturgeon/codeigniter-curl)
 5. A bundle of public root certificates (e.g. http://curl.haxx.se/ca/cacert.pem)
-6. An Amazon Web Services account (http://aws.amazon.com)
+6. An [Amazon Web Services account](http://aws.amazon.com)
 
 Spark
 -------------
-This library is also released as a Spark (GetSparks.org). If you use this library in any other way, **don't copy the autoload.php to your config directory**.
+This library is also released as a [Spark](http://getsparks.org). If you use this library in any other way, **don't copy the autoload.php to your config directory**.
 
 Documentation
 -------------
@@ -80,9 +80,9 @@ Preserves recipient after the message has been successfully send. When you call 
 
 Contributing
 ------------
-I am a firm believer of social coding, so <strike>if</strike> when you find a bug, please fork my code on GitHub (http://github.com/joelcox/codeigniter-amazon-ses) and squash it. I will be happy to merge it back in to the code base (and add you to the "Thanks to" section). If you're not too comfortable using Git or messing with the inner workings of this library, please open a new issue (http://github.com/joelcox/codeigniter-amazon-ses/issues). 
+I am a firm believer of social coding, so <strike>if</strike> when you find a bug, please fork my code on [GitHub](http://github.com/joelcox/codeigniter-amazon-ses) and squash it. I will be happy to merge it back in to the code base (and add you to the "Thanks to" section). If you're not too comfortable using Git or messing with the inner workings of this library, please [open a new issue](http://github.com/joelcox/codeigniter-amazon-ses/issues). 
 
 Thanks to
 ---------
-* Phil Sturgeon (http://philsturgeon.co.uk), for creating the CodeIgniter cURL library (http://github.com/philsturgeon/codeigniter-curl) and thus taking care of all the cURL hassle.
-* Ben Hartard (http://github.com/bhartard), for adding the email verification method.
+* [Phil Sturgeon](http://philsturgeon.co.uk), for creating the CodeIgniter [cURL library](http://github.com/philsturgeon/codeigniter-curl) and thus taking care of all the cURL hassle.
+* [Ben Hartard](http://github.com/bhartard), for adding the email verification method.
