@@ -64,11 +64,15 @@ Sends the message. Returns true on success.
 
     $this->amazon_ses->send();
 
+NOTE: All methods above are chainable, which means you can do the following
+
+    $this->amazon_ses->to('email@example.com')->subject('Yo!')->message('Sup dawg')->send();
+
 ###Misc
 
 Sends the message in debug mode. In debug mode, the send() methods returns the actual API response instead of a boolean. Call this method before calling the send method.
 	
-	$this->amazon_ses->debug();
+	$this->amazon_ses->debug(TRUE);
 
 Preserves recipient after the message has been successfully send. When you call this method, all recipients will be preserved during the objects life. This makes it possible to sent an additional message without re-specifying the recipients.
 	

@@ -57,7 +57,7 @@ class Amazon_ses
 	 */
 	function __construct()
 	{
-		log_message('debug', 'Amazon SES Class Initialized.');
+		log_message('debug', 'Amazon SES Class Initialized');
 
 		$this->_ci =& get_instance();
 		
@@ -68,7 +68,6 @@ class Amazon_ses
 		$this->_cert_path = $this->_ci->config->item('amazon_ses_cert_path');			
 		$this->from = $this->_ci->config->item('amazon_ses_from');
 		$this->charset = $this->_ci->config->item('amazon_ses_charset');
-		
 		
 		// Check whether reply_to is not set
 		if ($this->_ci->config->item('reply_to') === FALSE)
@@ -102,7 +101,7 @@ class Amazon_ses
 	 * Sets the from address
 	 * @param 	string 	email address the message is from
 	 * @param 	string 	name for the from address
-	 * @return 	void
+	 * @return 	mixed
 	 */
 	public function from($from, $name = NULL)
 	{
@@ -112,77 +111,79 @@ class Amazon_ses
 		if (valid_email($from))
 		{
 			$this->from = $from;
+			return $this;
 		}
 		else
 		{
 			log_message('debug', 'From address is not valid');
+			return FALSE;
 		}
 	}
 	
 	/**
 	 * Sets the to address
 	 * @param 	string 	to email address
-	 * @return 	void 
+	 * @return 	mixed 
 	 */
 	public function to($to)
 	{
 		$this->_add_address($to, 'to');
-		
 		return $this;
 	}
 	
 	/**
 	 * Sets the cc address
 	 * @param 	string 	cc email address
-	 * @return 	void 
+	 * @return 	mixed 
 	 */
 	public function cc($cc)
 	{	
 		$this->_add_address($cc, 'cc');
-		
 		return $this;
 	}
 	
 	/**
 	 * Sets the bcc address
 	 * @param 	string 	bcc email address
-	 * @return 	void 
+	 * @return 	mixed 
 	 */
 	public function bcc($bcc)
 	{
 		$this->_add_address($bcc, 'bcc');
-
 		return $this;
 	}
 	
 	/**
 	 * Sets the email subject
 	 * @param 	string	the subject
-	 * @return 	void
+	 * @return 	mixed
 	 */
 	public function subject($subject)
 	{
 		$this->subject = $subject;
+		return $this;
 	}
 	
 	/**
 	 * Sets the message
 	 * @param 	string	the message to be sent
-	 * @return 	void
+	 * @return 	mixed
 	 */
 	public function message($message)
 	{
 		$this->message = $message;
+		return $this;
 	}
 	
 	/**
 	 * Sets the alternative message (plain-text) for when HTML email is not supported by email client
 	 * @param 	string 	the alternative message to be sent
-	 * @return 	void
+	 * @return 	mixed
 	 */
 	public function message_alt($message_alt)
 	{
 		$this->message_alt = $message_alt;
+		return $this;
 	}
 	
 	/**
@@ -232,12 +233,12 @@ class Amazon_ses
 	
 	/**
 	* Sets debugmode
-	* Make send() return the actual response instead of a bool
+	* Makes send return the actual API response instead of a bool
 	* @return 	void
 	*/
-	public function debug()
+	public function debug($bool)
 	{
-		$this->debug = TRUE;
+		$this->debug = (bool) $bool;
 	}
 	
 	private function _add_address($address, $type)
@@ -256,7 +257,8 @@ class Amazon_ses
 			}
 			else
 			{
-				log_message('debug', 'The ' . $type . ' address is not valid');	
+				log_message('debug', ucfirst($type) . ' e-mail address is not valid');
+				return FALSE;	
 			}
 			
 		}
