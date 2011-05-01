@@ -30,6 +30,10 @@ Request to verify your email address as a sender.
 
     $this->amazon_ses->verify_address('from@example.com');
 
+Check whether a email address is verified as a sender.
+
+    $this->amazon_ses->address_is_verified('from@example.com');
+
 ### Recipients
 
 Set the "To" address(es) for a message.
