@@ -101,10 +101,9 @@ class Amazon_ses
 	/**
 	 * Sets the from address
 	 * @param 	string 	email address the message is from
-	 * @param 	string 	name for the from address
 	 * @return 	mixed
 	 */
-	public function from($from, $name = NULL)
+	public function from($from)
 	{
 		
 		$this->_ci->load->helper('email');
