@@ -451,7 +451,10 @@ class Amazon_ses
 		$this->_set_headers();
 		
 		// Make sure we connect over HTTPS and verify
-		$this->_ci->curl->ssl(TRUE, 2, $this->_cert_path);
+		if( ! isset($_SERVER['HTTPS']))
+		{
+			$this->_ci->curl->ssl(TRUE, 2, $this->_cert_path);
+		}
 		
 		// Show headers when in debug mode		
 		if($this->debug === TRUE)
