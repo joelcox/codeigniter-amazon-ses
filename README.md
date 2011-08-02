@@ -52,6 +52,10 @@ These three methods expect valid e-mail addresses as a string, array or comma se
 
 ###Message
 
+Set the sender address. You can also set this in your config file. The second parameter - the vanity name of the sender - is optional. 
+
+	$this->amazon_ses->from('do_reply@example.com', 'Email monkey');
+
 Set the subject for a message.
 
 	$this->amazon_ses->subject('Open me!');
