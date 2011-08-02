@@ -11,7 +11,7 @@
  * @link			http://joelcox.nl		
  * @license         http://www.opensource.org/licenses/mit-license.html
  * 
- * Copyright (c) 2011 Joël Cox and contributers
+ * Copyright (c) 2011 Joël Cox and contributors
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
