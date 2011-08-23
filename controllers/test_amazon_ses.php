@@ -1,19 +1,13 @@
-<?php 
-
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 /**
  * Small test suite for the Amazon Simple Email Service library
  *
  * @see /application/libraries/Amazon_ses.php
  */
-if (! defined('BASEPATH')) exit('No direct script access');
-
 class Test_amazon_ses extends CI_Controller {
 
-	function __construct(){
-		parent::__construct();
-	}
-	
-	function index() {
+	function index() 
+	{
 				
 		// Load the required libraries
 		$this->load->spark('amazon-ses/dev');
