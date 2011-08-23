@@ -10,30 +10,8 @@
  * @link 			https://github.com/joelcox/codeigniter-amazon-ses
  * @link			http://joelcox.nl		
  * @license         http://www.opensource.org/licenses/mit-license.html
- * 
- * Copyright (c) 2011 Joël Cox and contributors
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
  */
-
-class Amazon_ses
-{
+class Amazon_ses {
 	
 	private $_ci;               		// CodeIgniter instance
  	private $_cert_path;				// Path to SSL certificate
@@ -43,6 +21,7 @@ class Amazon_ses
 	public $region = 'us-east-1';		// Amazon region your SES service is located
 	
 	public $from;						// Default from e-mail address
+	public $from_name;					// Vanity sender name
 	public $reply_to;					// Default reply-to. Same as $from if omitted
 	public $recipients = array();		// Contains all recipients (to, cc, bcc)
 	public $subject;					// Message subject
@@ -68,6 +47,7 @@ class Amazon_ses
 		$this->_secret_key = $this->_ci->config->item('amazon_ses_secret_key');
 		$this->_cert_path = $this->_ci->config->item('amazon_ses_cert_path');			
 		$this->from = $this->_ci->config->item('amazon_ses_from');
+		$this->from_name = $this->_ci->config->item('amazon_ses_from_name');
 		$this->charset = $this->_ci->config->item('amazon_ses_charset');
 		
 		// Check whether reply_to is not set
@@ -101,16 +81,22 @@ class Amazon_ses
 	/**
 	 * Sets the from address
 	 * @param 	string 	email address the message is from
+	 * @param 	string 	vanity name from which the message is sent
 	 * @return 	mixed
 	 */
-	public function from($from)
+	public function from($from, $name = FALSE)
 	{
 		
 		$this->_ci->load->helper('email');
 		
+		if ($name)
+		{
+			$this->from_name = $name;
+		}
+		
 		if (valid_email($from))
 		{
-			$this->from = $from;
+			$this->from = $from;			
 			return $this;
 		}
 		else
@@ -355,7 +341,7 @@ class Amazon_ses
 	{
 		$query_string = array(
 			'Action' => 'SendEmail',
-			'Source' => $this->from,
+			'Source' => ($this->from_name ? $this->from_name . ' <' . $this->from . '>' : $this->from),
 			'Message.Subject.Data' => $this->subject,
 			'Message.Body.Text.Data' => (empty($this->message_alt) ? strip_tags($this->message) : $this->message_alt),
 			'Message.Body.Html.Data' => $this->message
@@ -451,7 +437,10 @@ class Amazon_ses
 		$this->_set_headers();
 		
 		// Make sure we connect over HTTPS and verify
-		$this->_ci->curl->ssl(TRUE, 2, $this->_cert_path);
+		if( ! isset($_SERVER['HTTPS']))
+		{
+			$this->_ci->curl->ssl(TRUE, 2, $this->_cert_path);
+		}
 		
 		// Show headers when in debug mode		
 		if($this->debug === TRUE)
