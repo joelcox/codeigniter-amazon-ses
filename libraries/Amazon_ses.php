@@ -51,7 +51,7 @@ class Amazon_ses {
 		$this->charset = $this->_ci->config->item('amazon_ses_charset');
 		
 		// Check whether reply_to is not set
-		if ($this->_ci->config->item('reply_to') === FALSE)
+		if ($this->_ci->config->item('amazon_ses_reply_to') === FALSE)
 		{
 			$this->reply_to = $this->_ci->config->item('amazon_ses_from');
 		}
@@ -371,6 +371,12 @@ class Amazon_ses {
 				$query_string['Destination.BccAddresses.member.' . ($i + 1)] = $this->recipients['bcc'][$i]; 
 			}
 		}
+		
+		if (isset($this->reply_to)) 
+		{
+	        	$query_string['ReplyToAddresses.member'] = $this->reply_to;
+	    	}
+		
 		
 		// Add character encoding if set
 		if ( ! empty($this->charset))
