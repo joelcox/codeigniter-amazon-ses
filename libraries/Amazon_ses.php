@@ -368,10 +368,10 @@ class Amazon_ses {
 			}
 		}
 		
-		if (isset($this->reply_to)) 
+		if (isset($this->reply_to) && (! empty($this->reply_to))) 
 		{
-	        	$query_string['ReplyToAddresses.member'] = $this->reply_to;
-	    	}
+			$query_string['ReplyToAddresses.member'] = $this->reply_to;
+		}
 		
 		
 		// Add character encoding if set
