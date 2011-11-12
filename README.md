@@ -83,8 +83,6 @@ Sends the message in debug mode. In debug mode, the send() methods returns the a
 	$this->amazon_ses->debug(TRUE);
 
 Preserves recipient after the message has been successfully send. When you call this method, all recipients will be preserved during the objects life. This makes it possible to sent an additional message without re-specifying the recipients.
-	
-	$this->amazon_ses->destroy();
 
 Contributing
 ------------
@@ -95,3 +93,4 @@ Thanks to
 * [Phil Sturgeon](http://philsturgeon.co.uk), for creating the CodeIgniter [cURL library](http://github.com/philsturgeon/codeigniter-curl) and thus taking care of all the cURL hassle.
 * [Ben Hartard](http://github.com/bhartard), for adding the email verification method.
 * [Stephen Frank](https://github.com/stephenfrank), for sorting out SSL conflict issues.
+* [Fabio Borraccetti](http://www.entula.net/), for fixing a bug in the reply-to header.
