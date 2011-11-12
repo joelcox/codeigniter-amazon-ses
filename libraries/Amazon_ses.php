@@ -69,13 +69,9 @@ class Amazon_ses {
 		// Load Phil's cURL library as a Spark or the normal way
 		if (method_exists($this->_ci->load, 'spark'))
 		{
-        	$this->_ci->load->spark('curl/1.0');
+			$this->_ci->load->spark('curl/1.0.0');
 		}
-		else
-		{
-			$this->_ci->load->library('curl');		
-		}
-		
+		$this->_ci->load->library('curl');
 	}
 	
 	/**
