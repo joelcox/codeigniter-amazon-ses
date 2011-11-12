@@ -83,8 +83,6 @@ Sends the message in debug mode. In debug mode, the send() methods returns the a
 	$this->amazon_ses->debug(TRUE);
 
 Preserves recipient after the message has been successfully send. When you call this method, all recipients will be preserved during the objects life. This makes it possible to sent an additional message without re-specifying the recipients.
-	
-	$this->amazon_ses->destroy();
 
 Contributing
 ------------
