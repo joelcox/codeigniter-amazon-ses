@@ -68,7 +68,7 @@ Set the alternative message (plain-text) to be sent. When not specified, an alte
 
 	$this->amazon_ses->message_alt('No HTML?!');
 
-Sends the message. Returns true on success.
+Sends the message. Returns true on success. You can pass a boolean as a first parameter to preserve the recipients after the message has been successfully send. This makes it possible to send an additional message without re-specifying the recipients.
 
     $this->amazon_ses->send();
 
@@ -82,8 +82,6 @@ Sends the message in debug mode. In debug mode, the send() methods returns the a
 	
 	$this->amazon_ses->debug(TRUE);
 
-Preserves recipient after the message has been successfully send. When you call this method, all recipients will be preserved during the objects life. This makes it possible to sent an additional message without re-specifying the recipients.
-
 Contributing
 ------------
 I am a firm believer of social coding, so <strike>if</strike> when you find a bug, please fork my code on [GitHub](http://github.com/joelcox/codeigniter-amazon-ses) and squash it. I will be happy to merge it back in to the code base (and add you to the "Thanks to" section). If you're not too comfortable using Git or messing with the inner workings of this library, please [open a new issue](http://github.com/joelcox/codeigniter-amazon-ses/issues). 
@@ -94,3 +92,4 @@ Thanks to
 * [Ben Hartard](http://github.com/bhartard), for adding the email verification method.
 * [Stephen Frank](https://github.com/stephenfrank), for sorting out SSL conflict issues.
 * [Fabio Borraccetti](http://www.entula.net/), for fixing a bug in the reply-to header.
+* Spicer at [Cloudmanic Labs](http://www.cloudmanic.com), for some small fixes.

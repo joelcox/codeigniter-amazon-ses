@@ -71,7 +71,9 @@ class Amazon_ses {
 		{
 			$this->_ci->load->spark('curl/1.0.0');
 		}
+		
 		$this->_ci->load->library('curl');
+		
 	}
 	
 	/**
@@ -368,7 +370,7 @@ class Amazon_ses {
 			}
 		}
 		
-		if (isset($this->reply_to) && (! empty($this->reply_to))) 
+		if (isset($this->reply_to) AND ( ! empty($this->reply_to))) 
 		{
 			$query_string['ReplyToAddresses.member'] = $this->reply_to;
 		}
