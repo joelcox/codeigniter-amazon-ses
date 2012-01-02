@@ -28,17 +28,15 @@ class Amazon_ses {
 	public $message;					// Message body
 	public $message_alt;				// Message body alternative in plain-text
 	public $charset;					// Character set
-	public $destroy = TRUE;				// Whether to reset everything after success		
 	
 	public $debug = FALSE;					
 	
 	/**
-	 * Initializes the class and references CI and read config
+	 * Constructor
 	 */
 	function __construct()
 	{
 		log_message('debug', 'Amazon SES Class Initialized');
-
 		$this->_ci =& get_instance();
 		
 		// Load all config items
@@ -51,7 +49,7 @@ class Amazon_ses {
 		$this->charset = $this->_ci->config->item('amazon_ses_charset');
 		
 		// Check whether reply_to is not set
-		if ($this->_ci->config->item('reply_to') === FALSE)
+		if ($this->_ci->config->item('amazon_ses_reply_to') === FALSE)
 		{
 			$this->reply_to = $this->_ci->config->item('amazon_ses_from');
 		}
@@ -69,17 +67,17 @@ class Amazon_ses {
 		// Load Phil's cURL library as a Spark or the normal way
 		if (method_exists($this->_ci->load, 'spark'))
 		{
-        	$this->_ci->load->spark('curl/1.0');
+			$this->_ci->load->spark('curl/1.0.0');
 		}
-		else
-		{
-			$this->_ci->load->library('curl');		
-		}
+		
+		$this->_ci->load->library('curl');
 		
 	}
 	
 	/**
-	 * Sets the from address
+	 * From
+	 *
+	 * Sets the from address.
 	 * @param 	string 	email address the message is from
 	 * @param 	string 	vanity name from which the message is sent
 	 * @return 	mixed
@@ -99,15 +97,16 @@ class Amazon_ses {
 			$this->from = $from;			
 			return $this;
 		}
-		else
-		{
-			log_message('debug', 'From address is not valid');
-			return FALSE;
-		}
+	
+		log_message('debug', 'From address is not valid');
+		return FALSE;
+	
 	}
 	
 	/**
-	 * Sets the to address
+	 * To
+	 *
+	 * Sets the to address.
 	 * @param 	string 	to email address
 	 * @return 	mixed 
 	 */
@@ -118,7 +117,9 @@ class Amazon_ses {
 	}
 	
 	/**
-	 * Sets the cc address
+	 * CC
+	 *
+	 * Sets the cc address.
 	 * @param 	string 	cc email address
 	 * @return 	mixed 
 	 */
@@ -129,7 +130,9 @@ class Amazon_ses {
 	}
 	
 	/**
-	 * Sets the bcc address
+	 * BBC
+	 *
+	 * Sets the bcc address.
 	 * @param 	string 	bcc email address
 	 * @return 	mixed 
 	 */
@@ -140,7 +143,9 @@ class Amazon_ses {
 	}
 	
 	/**
-	 * Sets the email subject
+	 * Subject
+	 *
+	 * Sets the email subject.
 	 * @param 	string	the subject
 	 * @return 	mixed
 	 */
@@ -151,7 +156,9 @@ class Amazon_ses {
 	}
 	
 	/**
-	 * Sets the message
+	 * Message
+	 *
+	 * Sets the message.
 	 * @param 	string	the message to be sent
 	 * @return 	mixed
 	 */
@@ -162,7 +169,9 @@ class Amazon_ses {
 	}
 	
 	/**
-	 * Sets the alternative message (plain-text) for when HTML email is not supported by email client
+	 * Message alt
+	 *
+	 * Sets the alternative message (plain-text) for when HTML email is not supported by email client.
 	 * @param 	string 	the alternative message to be sent
 	 * @return 	mixed
 	 */
@@ -173,7 +182,9 @@ class Amazon_ses {
 	}
 	
 	/**
-	 * Sends off the email
+	 * Send
+	 *
+	 * Sends off the email and make the API request.
 	 * @param 	bool	whether to empty the recipients array on success
 	 * @return 	bool
 	 */
@@ -197,6 +208,8 @@ class Amazon_ses {
 	}
 
 	/**
+	 * Verify address
+	 *
 	 * Verifies a from address as a valid sender
 	 * @link 	http://docs.amazonwebservices.com/ses/latest/GettingStartedGuide/index.html?VerifyEmailAddress.html
 	 * @param 	string	email address to verify as a sender
@@ -218,7 +231,9 @@ class Amazon_ses {
 	}
 	
 	/**
-	 * Checks whether the supplied email address is verified
+	 * Address is verified
+	 *
+	 * Checks whether the supplied email address is verified with Amazon.
 	 * @param	string	email address to be checked
 	 * @return 	bool
 	 */
@@ -238,30 +253,39 @@ class Amazon_ses {
 			return $response;
 		}
 
-		// We don't want to introduce another dependency (a XML parser)
-		// so we just check if the address is present in the response
-		// instead of returning an array with all addresses
+		/**
+		 * We don't want to introduce another dependency (a XML parser)
+	     * so we just check if the address is present in the response
+		 * instead of returning an array with all addresses.
+		 */
 		if (strpos($response, $address) === FALSE)
 		{
 			return FALSE;
 		}
-		else
-		{
-			return TRUE;	
-		}
+		
+		return TRUE;	
 		
 	}
 	
 	/**
-	* Sets debug mode
-	* Makes send return the actual API response instead of a bool
-	* @return 	void
-	*/
+	 * Debug
+	 *
+	 * Makes send() return the actual API response instead of a bool
+	 * @param 	bool
+	 * @return 	void
+	 */
 	public function debug($bool)
 	{
 		$this->debug = (bool) $bool;
 	}
 	
+	/**
+	 * Add address
+	 *
+	 * Add a new address to arecipients list.
+	 * @param 	string 	email address
+	 * @param	string 	recipient type (e.g, to, cc, bcc)
+	 */
 	private function _add_address($address, $type)
 	{
 		
@@ -287,9 +311,11 @@ class Amazon_ses {
 	}
 	
 	/**
-	 * Formats arrays and comma delimertered lists
+	 * Format addresses
+	 *
+	 * Formats arrays and comma delimertered lists.
 	 * @param 	mixed 	the list with addresses
-	 * @param 	string 	recipient type (i.e. to, cc, bcc)
+	 * @param 	string 	recipient type (e.g, to, cc, bcc)
 	 */
 	private function _format_addresses($addresses, $type)
 	{
@@ -322,18 +348,16 @@ class Amazon_ses {
 				$this->{$type}($address);
 			}
 			
-			return TRUE;
-			
+			return TRUE;	
 		}
-		else
-		{
 			
-			return FALSE;
+		return FALSE;
 			
-		}
 	}
 	
 	/**
+	 * Format query string
+	 *
 	 * Generates the query string for email
 	 * @return	array
 	 */
@@ -372,6 +396,12 @@ class Amazon_ses {
 			}
 		}
 		
+		if (isset($this->reply_to) AND ( ! empty($this->reply_to))) 
+		{
+			$query_string['ReplyToAddresses.member'] = $this->reply_to;
+		}
+		
+		
 		// Add character encoding if set
 		if ( ! empty($this->charset))
 		{
@@ -385,6 +415,8 @@ class Amazon_ses {
 	}
 	
 	/**
+	 * Set headers
+	 *
 	 * Generates the X-Amzn headers
 	 * @return 	string	headers including signed signature
 	 */
@@ -400,20 +432,22 @@ class Amazon_ses {
 	}
 	
 	/**
-	 * Calculate signature
+	 * Sign signature
+	 *
+	 * Calculate signature using HMAC.
 	 * @param	string	date used in the header
 	 * @return	string 	RFC 2104-compliant HMAC hash
 	 */
 	private function _sign_signature($date)
 	{
-		
-		$hash = hash_hmac('sha256', $date, $this->_secret_key, TRUE);
-		
+		$hash = hash_hmac('sha256', $date, $this->_secret_key, TRUE);	
 		return base64_encode($hash);
 	}
 	
 	/**
-	 * Generates API endpoint
+	 * Endpoint
+	 *
+	 * Generates the API endpoint.
 	 * @return 	string	URL to the SES endpoint for the region
 	 */
 	private function _endpoint()
@@ -422,9 +456,11 @@ class Amazon_ses {
 	}
 	
 	/**
-	 * Send a request to the Amazon SES API using Phil's cURL lib
+	 * API request
+	 *
+	 * Send a request to the Amazon SES API using Phil's cURL lib.
 	 * @param arra		query parameters that have to be added
-	 * @param bool		return the actual response
+	 * @param bool		whether to return the actual response
 	 * @return mixed
 	 */
 	private function _api_request($query_string, $return = FALSE)
@@ -463,10 +499,8 @@ class Amazon_ses {
 			log_message('debug', 'API request failed.');
 			return FALSE;
 		}
-		else
-		{
-			return TRUE;				
-		}
+		
+		return TRUE;				
 		
 	}
 		
