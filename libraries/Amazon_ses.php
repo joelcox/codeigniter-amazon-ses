@@ -17,7 +17,8 @@ class Amazon_ses {
  	private $_cert_path;				// Path to SSL certificate
 	
 	private $_access_key;				// Amazon Access Key
-	private $_secret_key;				// Amazon Secret Access Key 
+	private $_secret_key;				// Amazon Secret Access Key
+	private $_mime_boundary;			// Amazon Mime Boundary 
 	public $region = 'us-east-1';		// Amazon region your SES service is located
 	
 	public $from;						// Default from e-mail address
@@ -28,6 +29,9 @@ class Amazon_ses {
 	public $message;					// Message body
 	public $message_alt;				// Message body alternative in plain-text
 	public $charset;					// Character set
+	public $attach = array();			// Array for attachment
+	public $crlf;							
+	
 	
 	public $debug = FALSE;					
 	
@@ -47,6 +51,9 @@ class Amazon_ses {
 		$this->from = $this->_ci->config->item('amazon_ses_from');
 		$this->from_name = $this->_ci->config->item('amazon_ses_from_name');
 		$this->charset = $this->_ci->config->item('amazon_ses_charset');
+		$this->_mime_boundary = $this->_ci->config->item('amazon_ses_mime_boundary');
+		
+		$this->crlf = "\n";
 		
 		// Check whether reply_to is not set
 		if ($this->_ci->config->item('amazon_ses_reply_to') === FALSE)
@@ -182,6 +189,51 @@ class Amazon_ses {
 	}
 	
 	/**
+	 * Attach
+	 *
+	 * Attach files to the email to send
+	 * @param 	string 	the alternative message to be sent
+	 * @return 	mixed
+	 */
+	public function attach($filename, $name = FALSE)
+	{
+		
+		if (!file_exists($filename)) return FALSE;
+		if ( ! $name) $name = basename($filename);
+		
+		$this->attach[] = array ( "filename" 	=> $filename,
+								  "mime_type"	=> $this->_mime_types(next(explode('.', basename($filename)))),
+								  "name"		=> $name,
+								  "ext"			=> next(explode('.', basename($filename))),
+						 		);
+		return $this;
+	}
+	
+	/**
+	 * Clear
+	 *
+	 * @param 	bool	clear attachments
+	 * @return	mixed
+	 */
+	public function clear($clear_attachments = FALSE)
+	{
+
+		$this->reply_to		= "";
+		$this->recipients 	= array();
+		$this->subject		= "";
+		$this->message		= "";
+		$this->message_alt	= "";
+		$this->attach 		= array();
+
+		if ($clear_attachments !== FALSE)
+		{
+			$this->attach = array(); 
+		}
+
+		return $this;
+	}
+	
+	/**
 	 * Send
 	 *
 	 * Sends off the email and make the API request.
@@ -192,7 +244,7 @@ class Amazon_ses {
 	{
 		
 		// Create the message query string
-		$query_string = $this->_format_query_string();
+		$query_string = (count($this->attach)) ? $this->_format_query_raw_string() : $this->_format_query_string();
 		
 		// Pass it to the Amazon API	
 		$response = $this->_api_request($query_string);		
@@ -339,7 +391,6 @@ class Amazon_ses {
 		// Check if we're dealing with a comma seperated list
 		elseif (strpos($addresses, ', ') !== FALSE)
 		{
-			
 			// Write each element
 			$addresses = explode(', ', $addresses);
 			
@@ -413,6 +464,167 @@ class Amazon_ses {
 		return $query_string;
 		
 	}
+
+	/**
+	 * Format query raw string
+	 *
+	 * Generates the query string for raw email
+	 * @return	array
+	 */
+	private function _format_query_raw_string()
+	{
+			$query_string = array(
+			'Action' => 'SendRawEmail',
+			'Source' => ($this->from_name ? $this->from_name . ' <' . $this->from . '>' : $this->from),
+			'RawMessage.Data' => ''
+		);
+
+		// Add all recipients to array
+		if (isset($this->recipients['to']))
+		{
+			
+			for ($i = 0; $i < count($this->recipients['to']); $i++)
+			{
+				$query_string['Destinations.member.' . ($i + 1)] = $this->recipients['to'][$i];  
+			}	
+
+			$query_string['RawMessage.Data'] .= "To:".implode(",", $this->recipients['to'])."\n";
+		}
+
+		$query_string['RawMessage.Data'] .= "Subject: ".$this->subject."\n";
+		
+		if (isset($this->recipients['cc']) and count($this->recipients['cc']))
+		{
+			$query_string['RawMessage.Data'] .= "Cc:".implode(",", $this->recipients['cc'])."\n";
+		}
+		
+		if (isset($this->recipients['bcc']))
+		{
+			$query_string['RawMessage.Data'] .= "Bcc:".implode(",", $this->recipients['bcc'])."\n";
+		}
+		
+		if (isset($this->reply_to) AND ( ! empty($this->reply_to))) 
+		{
+			$query_string['RawMessage.Data'] .= "Reply-To:".$this->reply_to."\n";
+		}
+		
+		 
+		$query_string['RawMessage.Data'] .= "Content-Type: multipart/mixed;\n";
+		$query_string['RawMessage.Data'] .= "	boundary=\"".$this->_mime_boundary."\"\n";
+		$query_string['RawMessage.Data'] .= "MIME-Version: 1.0\n\n";
+		
+		$query_string['RawMessage.Data'] .= "--".$this->_mime_boundary."\n";
+		$query_string['RawMessage.Data'] .= "Content-Type: text/html; charset=\"UTF-8\"\n";
+		$query_string['RawMessage.Data'] .= "Content-Transfer-Encoding: quoted-printable\n\n";
+
+		$query_string['RawMessage.Data'] .= $this->_prep_quoted_printable($this->message);
+		
+		//Add attachment
+		foreach($this->attach as $a){
+			$query_string['RawMessage.Data'] .= "\n\n--".$this->_mime_boundary."\n";
+			$query_string['RawMessage.Data'] .= "Content-Type: ".$a['mime_type']."; name=\"".$this->_prep_quoted_printable($a['name']).".".$a['ext']."\"\n";
+			$query_string['RawMessage.Data'] .= "Content-Description: \"".$this->_prep_quoted_printable($a['name'])."\"\n";
+			$query_string['RawMessage.Data'] .= "Content-Disposition: attachment; filename=\"".$this->_prep_quoted_printable($a['name']).".".$a['ext']."\"; size=".filesize($a['filename']).";\n";
+			$query_string['RawMessage.Data'] .= "Content-Transfer-Encoding: base64\n\n";
+			
+			$filetype = pathinfo($a['filename'], PATHINFO_EXTENSION);
+			$imgbinary = fread(fopen($a['filename'], "r"), filesize($a['filename']));
+			$query_string['RawMessage.Data'] .= base64_encode($imgbinary);
+			
+		}
+
+		$query_string['RawMessage.Data'] = base64_encode($query_string['RawMessage.Data']);
+		
+		return $query_string;
+	}
+
+	/**
+	 * Prep Quoted Printable
+	 * 
+	 * Prepares string for Quoted-Printable Content-Transfer-Encoding
+	 * 
+	 * @access	private
+	 * @param	string
+	 * @param	integer
+	 * @return	string
+	 */
+	
+	private function _prep_quoted_printable($str, $charlim = '')
+	{
+		// Set the character limit
+		// Don't allow over 76, as that will make servers and MUAs barf
+		// all over quoted-printable data
+		if ($charlim == '' OR $charlim > '76')
+		{
+			$charlim = '76';
+		}
+
+		// Reduce multiple spaces
+		$str = preg_replace("| +|", " ", $str);
+
+		// kill nulls
+		$str = preg_replace('/\x00+/', '', $str);
+
+		// Standardize newlines
+		if (strpos($str, "\r") !== FALSE)
+		{
+			$str = str_replace(array("\r\n", "\r"), "\n", $str);
+		}
+
+
+		// Break into an array of lines
+		$lines = explode("\n", $str);
+
+		$escape = '=';
+		$output = '';
+
+		foreach ($lines as $line)
+		{
+			$length = strlen($line);
+			$temp = '';
+
+			// Loop through each character in the line to add soft-wrap
+			// characters at the end of a line " =\r\n" and add the newly
+			// processed line(s) to the output (see comment on $crlf class property)
+			for ($i = 0; $i < $length; $i++)
+			{
+				// Grab the next character
+				$char = substr($line, $i, 1);
+				$ascii = ord($char);
+
+				// Convert spaces and tabs but only if it's the end of the line
+				if ($i == ($length - 1))
+				{
+					$char = ($ascii == '32' OR $ascii == '9') ? $escape.sprintf('%02s', dechex($ascii)) : $char;
+				}
+
+				// encode = signs
+				if ($ascii == '61')
+				{
+					$char = $escape.strtoupper(sprintf('%02s', dechex($ascii)));  // =3D
+				}
+
+				// If we're at the character limit, add the line to the output,
+				// reset our temp variable, and keep on chuggin'
+				if ((strlen($temp) + strlen($char)) >= $charlim)
+				{
+					$output .= $temp.$escape.$this->crlf;
+					$temp = '';
+				}
+
+				// Add the character to our temporary line
+				$temp .= $char;
+			}
+
+			// Add our completed line to the output
+			$output .= $temp.$this->crlf;
+		}
+
+		// get rid of extra CRLF tacked onto the end
+		$output = substr($output, 0, strlen($this->crlf) * -1);
+
+		return $output;
+	}	
 	
 	/**
 	 * Set headers
@@ -502,6 +714,107 @@ class Amazon_ses {
 		
 		return TRUE;				
 		
+	}
+	
+	/**
+	 * _mime_types
+	 *
+	 * Check if the extension file is allowed from Amazon SES
+	 * @param string	Extension
+	 * @return string	Mime type
+	 */
+	private function _mime_types($ext = "")
+	{
+		$mimes = array(	'hqx'	=>	'application/mac-binhex40',
+						'cpt'	=>	'application/mac-compactpro',
+						'doc'	=>	'application/msword',
+						'bin'	=>	'application/macbinary',
+						'dms'	=>	'application/octet-stream',
+						'lha'	=>	'application/octet-stream',
+						'lzh'	=>	'application/octet-stream',
+						'exe'	=>	'application/octet-stream',
+						'class'	=>	'application/octet-stream',
+						'psd'	=>	'application/octet-stream',
+						'so'	=>	'application/octet-stream',
+						'sea'	=>	'application/octet-stream',
+						'dll'	=>	'application/octet-stream',
+						'oda'	=>	'application/oda',
+						'pdf'	=>	'application/pdf',
+						'ai'	=>	'application/postscript',
+						'eps'	=>	'application/postscript',
+						'ps'	=>	'application/postscript',
+						'smi'	=>	'application/smil',
+						'smil'	=>	'application/smil',
+						'mif'	=>	'application/vnd.mif',
+						'xls'	=>	'application/vnd.ms-excel',
+						'ppt'	=>	'application/vnd.ms-powerpoint',
+						'wbxml'	=>	'application/vnd.wap.wbxml',
+						'wmlc'	=>	'application/vnd.wap.wmlc',
+						'dcr'	=>	'application/x-director',
+						'dir'	=>	'application/x-director',
+						'dxr'	=>	'application/x-director',
+						'dvi'	=>	'application/x-dvi',
+						'gtar'	=>	'application/x-gtar',
+						'php'	=>	'application/x-httpd-php',
+						'php4'	=>	'application/x-httpd-php',
+						'php3'	=>	'application/x-httpd-php',
+						'phtml'	=>	'application/x-httpd-php',
+						'phps'	=>	'application/x-httpd-php-source',
+						'js'	=>	'application/x-javascript',
+						'swf'	=>	'application/x-shockwave-flash',
+						'sit'	=>	'application/x-stuffit',
+						'tar'	=>	'application/x-tar',
+						'tgz'	=>	'application/x-tar',
+						'xhtml'	=>	'application/xhtml+xml',
+						'xht'	=>	'application/xhtml+xml',
+						'zip'	=>	'application/zip',
+						'mid'	=>	'audio/midi',
+						'midi'	=>	'audio/midi',
+						'mpga'	=>	'audio/mpeg',
+						'mp2'	=>	'audio/mpeg',
+						'mp3'	=>	'audio/mpeg',
+						'aif'	=>	'audio/x-aiff',
+						'aiff'	=>	'audio/x-aiff',
+						'aifc'	=>	'audio/x-aiff',
+						'ram'	=>	'audio/x-pn-realaudio',
+						'rm'	=>	'audio/x-pn-realaudio',
+						'rpm'	=>	'audio/x-pn-realaudio-plugin',
+						'ra'	=>	'audio/x-realaudio',
+						'rv'	=>	'video/vnd.rn-realvideo',
+						'wav'	=>	'audio/x-wav',
+						'bmp'	=>	'image/bmp',
+						'gif'	=>	'image/gif',
+						'jpeg'	=>	'image/jpeg',
+						'jpg'	=>	'image/jpeg',
+						'jpe'	=>	'image/jpeg',
+						'png'	=>	'image/png',
+						'tiff'	=>	'image/tiff',
+						'tif'	=>	'image/tiff',
+						'css'	=>	'text/css',
+						'html'	=>	'text/html',
+						'htm'	=>	'text/html',
+						'shtml'	=>	'text/html',
+						'txt'	=>	'text/plain',
+						'text'	=>	'text/plain',
+						'log'	=>	'text/plain',
+						'rtx'	=>	'text/richtext',
+						'rtf'	=>	'text/rtf',
+						'xml'	=>	'text/xml',
+						'xsl'	=>	'text/xml',
+						'mpeg'	=>	'video/mpeg',
+						'mpg'	=>	'video/mpeg',
+						'mpe'	=>	'video/mpeg',
+						'qt'	=>	'video/quicktime',
+						'mov'	=>	'video/quicktime',
+						'avi'	=>	'video/x-msvideo',
+						'movie'	=>	'video/x-sgi-movie',
+						'doc'	=>	'application/msword',
+						'word'	=>	'application/msword',
+						'xl'	=>	'application/excel',
+						'eml'	=>	'message/rfc822'
+					);
+
+		return ( ! isset($mimes[strtolower($ext)])) ? "multipart/*" : $mimes[strtolower($ext)];
 	}
 		
 }
